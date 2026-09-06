@@ -8,6 +8,7 @@
     "menu_item": [
       {"title": "Inicio", "link": "index.sql"},
       {"title": "Deportes", "link": "deporte.sql"},
+      {"title": "Equipos", "link": "equipo.sql"},
       {"title": "Estadísticas", "link": "estadisticas.sql"}
     ],
     "footer": "Histórico de clasificaciones deportivas.",

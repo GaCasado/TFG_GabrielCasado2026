@@ -60,25 +60,24 @@ SELECT 'table' AS component,
        'Puntos' AS align_center
 WHERE $existe > 0;
 
--- El ORDER BY se hace en la subconsulta interna, sobre las columnas reales
--- de la tabla (puesto, equipo): SQLPage exige que lo que aparece en el
--- ORDER BY de la consulta de un componente esté presente tal cual en su
--- SELECT, así que ordenamos antes de renombrar/transformar las columnas
--- para la presentación.
+-- El ORDER BY va en esta misma consulta (nada de envolverla en una
+-- subconsulta "FROM (... ORDER BY ...) AS x"): MariaDB, a diferencia de
+-- MySQL, no garantiza que el orden de una subconsulta sin LIMIT se
+-- conserve al pasar por una consulta exterior sin su propio ORDER BY —
+-- en la práctica, sencillamente no lo hace, y las filas acababan
+-- reordenadas alfabéticamente por equipo en vez de por posición.
+-- Comprobado directamente contra la base de datos real.
 SELECT
     CASE WHEN puesto = -1 THEN 'DSQ' ELSE CAST(puesto AS CHAR) END AS 'Posición',
     equipo AS 'Equipo',
     COALESCE(CAST(puntos AS CHAR), '—') AS 'Puntos'
-FROM (
-    SELECT *
-    FROM Clasificaciones
-    WHERE anio = $anio AND deporte = $deporte AND genero = $genero AND categoria = $categoria
-      AND puesto IS NOT NULL
-    ORDER BY
-        CASE WHEN puesto = -1 THEN 1 ELSE 0 END,
-        puesto ASC,
-        equipo ASC
-) AS ordenado;
+FROM Clasificaciones
+WHERE anio = $anio AND deporte = $deporte AND genero = $genero AND categoria = $categoria
+  AND puesto IS NOT NULL
+ORDER BY
+    CASE WHEN puesto = -1 THEN 1 ELSE 0 END,
+    puesto ASC,
+    equipo ASC;
 
 -- ---------------------------------------------------------------------------
 -- Trofeo Alfonso: todos los equipos de esta clasificación con posición en
@@ -101,10 +100,7 @@ WHERE $hay_alfonso > 0;
 SELECT
     CAST(alfonso AS CHAR) AS 'Posición',
     equipo AS 'Equipo'
-FROM (
-    SELECT *
-    FROM Clasificaciones
-    WHERE anio = $anio AND deporte = $deporte AND genero = $genero AND categoria = $categoria
-      AND alfonso IS NOT NULL AND alfonso <> -1
-    ORDER BY alfonso ASC, equipo ASC
-) AS alfonso_ordenado;
+FROM Clasificaciones
+WHERE anio = $anio AND deporte = $deporte AND genero = $genero AND categoria = $categoria
+  AND alfonso IS NOT NULL AND alfonso <> -1
+ORDER BY alfonso ASC, equipo ASC;

@@ -104,23 +104,34 @@ SELECT
             ELSE CASE genero WHEN 'm' THEN 'Masculino' WHEN 'f' THEN 'Femenino' ELSE genero END
         END,
         ' · ', categoria, 'ª categoría'
-    ) AS description
+    ) AS description,
+    sqlpage.link('clasificacion.sql', JSON_OBJECT(
+        'anio', anio, 'deporte', deporte, 'genero', genero, 'categoria', categoria
+    )) AS link
 FROM (
     SELECT DISTINCT anio, deporte, genero, categoria
     FROM Clasificaciones
     WHERE deporte = $deporte
-    ORDER BY anio DESC, genero, categoria
 ) AS combinaciones
-WHERE $tab_norm = 'clasificaciones';
+WHERE $tab_norm = 'clasificaciones'
+-- El ORDER BY va aquí, en la consulta exterior, no dentro de la
+-- subconsulta: MariaDB no garantiza conservar el orden de una subconsulta
+-- sin LIMIT al pasar por una consulta exterior sin su propio ORDER BY.
+ORDER BY anio DESC, genero, categoria;
 
 -- Pestaña "Campeones": todas las filas con puesto = 1 de este deporte.
+-- El año enlaza a la clasificación completa de esa categoría ese año,
+-- igual que en la pestaña "Clasificaciones" y en equipo.sql.
 SELECT 'table' AS component,
+       'Año' AS markdown,
        TRUE AS sort,
        TRUE AS search
 WHERE $existe > 0 AND $tab_norm = 'campeones';
 
 SELECT
-    anio AS 'Año',
+    CONCAT('[', anio, '](', sqlpage.link('clasificacion.sql', JSON_OBJECT(
+        'anio', anio, 'deporte', deporte, 'genero', genero, 'categoria', categoria
+    )), ')') AS 'Año',
     CASE
         WHEN (SELECT COUNT(DISTINCT c2.genero) FROM Clasificaciones AS c2
               WHERE c2.deporte = $deporte AND c2.anio = campeones.anio) = 1
@@ -130,8 +141,6 @@ SELECT
     CONCAT(categoria, 'ª') AS 'Categoría',
     equipo AS 'Equipo',
     COALESCE(CAST(puntos AS CHAR), '—') AS 'Puntos'
-FROM (
-    SELECT * FROM Clasificaciones
-    WHERE deporte = $deporte AND puesto = 1 AND $tab_norm = 'campeones'
-    ORDER BY anio DESC, genero, categoria
-) AS campeones;
+FROM Clasificaciones AS campeones
+WHERE deporte = $deporte AND puesto = 1 AND $tab_norm = 'campeones'
+ORDER BY anio DESC, genero, categoria;
