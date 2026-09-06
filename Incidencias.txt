@@ -1,0 +1,230 @@
+INCIDENCIAS DEL PROYECTO — Base de datos Competición Interna UCM
+Generado: 2026-08-16
+Alcance: revisión completa de los 26 ficheros SQL (1990-91 a 1998-99, 2005-06 a 2018-19,
+2021-22 a 2023-24) contra sus PDFs originales ("Memorias de Competición Interna").
+
+===========================================================================
+1. AÑOS QUE FALTAN POR COMPLETO (sin PDF disponible, fuera del alcance del proyecto)
+===========================================================================
+
+Los siguientes 6 cursos académicos NO tienen PDF fuente en la carpeta pdf/ y por tanto
+no existe (ni puede existir) fichero SQL para ellos. Están documentados como
+"DESAPARECIDOS" en pdf/Convertidos/DESAPARECIDOS.txt:
+
+  - 1999-2000
+  - 2000-01
+  - 2001-02
+  - 2002-03
+  - 2003-04
+  - 2004-05
+
+Esto deja un hueco de 6 años entre el final de los "años 90" (1998-99) y el inicio de
+la etapa "Trofeo Rector" (2005-06). Si en algún momento aparecen esos PDFs, habría que
+añadir sus ficheros SQL siguiendo la misma metodología que el resto del proyecto.
+
+===========================================================================
+2. FICHEROS SQL CON NOMBRE INCONSISTENTE (mantenidos así deliberadamente)
+===========================================================================
+
+- sql/clasificaciones_2005_06_NULL.sql
+  El sufijo "_NULL" viene de un intento previo en el que algunos valores de `puntos`
+  se marcaron NULL por no ser legibles en el escaneado. Durante esta revisión se
+  pudieron rescatar casi todos esos valores releyendo el PDF a mayor resolución, pero
+  se ha mantenido el nombre de fichero tal cual para no romper referencias externas.
+
+- sql/clasificaciones_2012_2013_corregido.sql
+  Lleva el sufijo "_corregido" de una revisión anterior a este proyecto. Se ha
+  mantenido el nombre igual por el mismo motivo.
+
+Ambos ficheros son funcionalmente equivalentes al resto (incluyen START TRANSACTION/
+COMMIT y superan la verificación en SQLite), el nombre es solo un rastro histórico.
+
+===========================================================================
+3. INCIDENCIAS DE DUPLICACIÓN DE DATOS (ya corregidas)
+===========================================================================
+
+- clasificaciones_1994_95.sql (detectada y corregida al inicio del proyecto)
+  Existían DOS versiones del fichero de 1994-95: una base y otra
+  "_corregido_alfonso_cm". Se comprobó que la versión "_corregido" era la correcta
+  (incluía Colegios Mayores del Trofeo Alfonso XIII conforme a la convención) y se
+  eliminó la versión base duplicada.
+
+- clasificaciones_2015_2016.sql (detectada y corregida durante la revisión)
+  Este fichero era, antes de la revisión, una copia accidental byte-idéntica de
+  clasificaciones_2014_2015.sql con el campo `anio` cambiado — es decir, contenía los
+  datos de 2014-15 etiquetados como 2015-16, sin ninguna relación con los datos reales
+  de ese curso. Se reconstruyó por completo desde su propio PDF. No se ha investigado
+  CÓMO se produjo originalmente esa copia (no hay control de versiones / git en el
+  proyecto para rastrearlo).
+
+===========================================================================
+4. PATRONES DE ERROR SISTEMÁTICOS ENCONTRADOS EN LOS BORRADORES (ya corregidos
+   en los 26 ficheros, se documentan porque podrían repetirse si se generan
+   nuevos ficheros SQL en el futuro con el mismo método)
+===========================================================================
+
+- `puntos = 0` en vez de `NULL` para equipos descalificados.
+  Presente en casi todos los años de la etapa Trofeo Rector (2008-09 a 2018-19).
+  Afectaba a decenas de filas por año (entre ~30 y ~60 según el año).
+
+- Filas de Colegio Mayor (CMU) con `puesto`/`puntos` numéricos en vez de NULL/NULL.
+  El borrador ponía el resultado del propio Trofeo Alfonso XIII (p.ej. puesto=1,
+  puntos=4) en vez de NULL/NULL como exige la convención. Presente de forma
+  sistemática en casi toda la etapa Trofeo Rector (18 filas típicamente por año) y en
+  varios años 90.
+
+- `asc_desc` de 2ª categoría calculado mal: el borrador ascendía automáticamente al
+  1º (o a los 2 primeros) de cada grupo, cuando la regla real es que asciende quien
+  gana la Liga de Ascenso / aparece confirmado en la sección "Ascensos y Descensos",
+  y NUNCA un equipo cuya facultad ya tiene equipo en 1ª esa misma temporada. Este bug
+  estructural se encontró y corrigió en prácticamente todos los años revisados
+  (1990-91, 1991-92, 1992-93, 1994-95, 1996-97, etc.).
+
+- `asc_desc = 0` en vez de `-1` para equipos descalificados de 1ª categoría (y en
+  deportes de categoría única). Muy extendido en los años 90 y presente también en
+  varios años de la etapa Trofeo Rector.
+
+- En la etapa Trofeo Rector, el `puesto` de la liga no se reordenaba según el
+  resultado real de la "Fase Final del Trofeo Rector" (sección 5 del PDF). Corregido
+  en todos los años que tenían fase final real.
+
+===========================================================================
+5. CASOS DUDOSOS DOCUMENTADOS (no se pudo confirmar al 100% contra el PDF;
+   se dejó el valor más razonable sin inventar datos, y queda anotado en la
+   cabecera del propio fichero SQL correspondiente)
+===========================================================================
+
+- 1990-91: la matriz de puntuación manuscrita del Trofeo Alfonso XIII (pág. 56 del
+  PDF) no se pudo transcribir con fiabilidad por su resolución/legibilidad; se usaron
+  en su lugar las páginas de clasificación final por deporte (más legibles).
+
+- 1991-92: los equipos "Pablo Montesinos", "Domingo de Soto", "Maria Diaz Jimenez",
+  "Escuni" y "Fomento" podrían ser Colegios Mayores, pero el PDF de ese año no los
+  marca explícitamente como tal (a diferencia de otros CMU que sí llevan el prefijo
+  "C.M."). Se dejaron sin el prefijo CMU para no inventar una clasificación.
+
+- 1993-94: dos equipos de Futbol Sala masculino ganaron su Liga de Ascenso pero no
+  ascendieron en la clasificación oficial, sin que el PDF documente un bloqueo obvio
+  (como "la facultad ya tiene equipo en 1ª"). No se ha podido determinar el motivo.
+
+- 1994-95: Rugby masculino y Voleibol masculino tenían una vacante en 1ª categoría
+  (por descalificación) pero no se localizó página de Liga de Ascenso para ellos en
+  el PDF — se dejó asc_desc=0 en 2ª categoría para ambos. El ascenso marcado en
+  Voleibol femenino se hizo de forma tentativa por falta de una fuente 100% explícita.
+
+- 2006-07: Voleibol masculino 2ª categoría (equipos BELLAS ARTES y BIOLOGICAS) no
+  tiene página de clasificación localizable en el escaneado del PDF. Se mantuvo
+  asc_desc=1 para ambos (confirmado indirectamente por la sección de Ascensos y
+  Descensos) pero `puesto`/`puntos` no se han podido verificar visualmente.
+
+- 2010-11: una página de "clasificados para jugar la Liga de Ascenso" de Voleibol
+  femenino parece contener una lista de otro deporte por error de imprenta del propio
+  PDF (10 equipos listados cuando esa categoría solo tiene 4). No afectó al resultado
+  final porque la sección de Ascensos y Descensos permitió confirmarlo por otra vía.
+
+- 2011-12: varias páginas parecen faltar en el escaneado original — 1 equipo
+  descalificado de Rugby masculino 1ª, 2 de Baloncesto femenino 1ª, un pequeño
+  desajuste en Voleibol femenino 2ª, y la página específica de Ascensos/Descensos de
+  Voleibol femenino 1ª no está en el PDF (se aplicó la regla general del proyecto en
+  su lugar, sin confirmación directa para ese caso concreto).
+
+- 2012-13: la lista de "clasificados para jugar la Liga de Ascenso" de Futbol Sala
+  2ª masculino no coincide con los equipos reales de esa clasificación en el PDF
+  (posible error de imprenta del documento original). No afectó al resultado porque
+  se pudo confirmar por otras secciones.
+
+- 2013-14: el PDF menciona un descenso del equipo "FILOSOFIA" en Baloncesto femenino
+  en la sección de Ascensos y Descensos, pero ese deporte no tiene ninguna fila para
+  "FILOSOFIA" en las clasificaciones de liga de ese año — posible error de plantilla
+  del propio documento (reutilización de una nota de otro año/deporte). No se ha
+  creado una fila "fantasma" para este equipo.
+
+- 2015-16: el nombre de equipo "I.E.B." no tiene una expansión clara en el documento
+  ni en las listas de referencia del proyecto; se mantuvo la sigla tal cual aparece
+  impresa en el PDF.
+
+- 2016-17: el orden impreso en la clasificación del Trofeo Alfonso XIII de Futbol
+  Sala masculino no es estrictamente descendente por puntos (hay un empate/orden que
+  no sigue la puntuación mostrada). Se conservó el orden tal como aparece en el PDF,
+  sin poder verificar cuál fue el criterio de desempate real.
+
+===========================================================================
+6. LIMITACIONES TÉCNICAS DEL ENTORNO (relevantes si se retoma este trabajo)
+===========================================================================
+
+- El documento de contexto original del proyecto (CONTEXTO_PARA_CLAUDE_CODE.md)
+  afirmaba que los PDFs de la etapa Trofeo Rector (2005-06 a 2018-19) tenían "texto
+  nativo extraíble". Esto era INCORRECTO: se confirmó (extrayendo 0 caracteres con
+  PyMuPDF en varios años de prueba) que son imágenes escaneadas sin ninguna capa de
+  texto, igual que los años 90. Ya corregido en la documentación del proyecto.
+
+- La máquina usada para esta revisión no tiene instalado `pdftoppm` (poppler), por lo
+  que la herramienta estándar de lectura de PDF falla al intentar renderizar
+  cualquier página. Se resolvió renderizando manualmente con la librería PyMuPDF
+  (paquete `pymupdf`, instalado vía pip para esta sesión) y leyendo después las
+  imágenes PNG resultantes. Si se monta este proyecto en otra máquina sin `pymupdf`
+  instalado, habrá que volver a instalarlo (o instalar poppler/pdftoppm).
+
+- Durante la revisión, uno de los procesos automáticos usados para acelerar el
+  trabajo lanzó una tarea secundaria propia (para extraer los datos de 2015-16) que
+  quedó corriendo en segundo plano sin control directo tras una pausa del proyecto.
+  Terminó por su cuenta y entregó un resultado correcto y verificado, pero conviene
+  saber que existió ese comportamiento fuera de control directo durante un tramo de
+  la sesión, por si se repitiera un patrón similar en el futuro.
+
+===========================================================================
+7. FUERA DE ALCANCE (no revisado, intencionadamente)
+===========================================================================
+
+En ningún año del proyecto se ha revisado el contenido de las secciones del PDF que
+no aportan datos a la tabla `Clasificaciones`: resumen de partidos jugados/suspendidos,
+cuadro de equipos y licencias, estadísticas de inscritos por club. No se ha detectado
+ninguna incidencia ahí porque no se ha llegado a mirar — si en el futuro se necesitan
+esos datos para otra tabla, habría que revisar esas secciones desde cero.
+
+===========================================================================
+8. NORMALIZACIÓN DE NOMBRES DE EQUIPO (posterior a la revisión de datos)
+===========================================================================
+
+Después de cerrar la revisión de los 26 años, se detectó que un mismo equipo
+aparecía escrito de formas distintas según el año (abreviaturas, "CMU" vs "C.M.",
+mayúsculas/minúsculas, p.ej. "CMU BARBERAN" / "C.M. BARBERAN" / "Barberan"). Se
+unificaron ~180 formas distintas en 110 equipos reales, escribiendo en todos los
+`sql/clasificaciones_*.sql` la forma más larga/clara de cada uno.
+
+Método: antes de fusionar dos nombres se comprobó, contra los datos reales, que
+nunca coincidieran como equipos distintos en la misma clasificación (mismo año +
+deporte + género + categoría); si coincidían, se dejaron como equipos separados
+(p.ej. "BIOLOGIA II" es un equipo distinto de "BIOLOGICAS": coinciden 14 veces en
+la misma clasificación). Los casos dudosos se consultaron antes de aplicarlos.
+
+De paso se encontró y corrigió un bug de codificación en el Dockerfile de
+`clasificaciones-data`: al cargar los `.sql` (que están en UTF-8 correcto) en
+MySQL sin forzar el charset del cliente, algunos acentos se guardaban mal
+codificados (p.ej. "Mª" → "MÂª"), lo que generaba duplicados falsos adicionales.
+
+Equipos que a propósito se dejaron SIN fusionar por falta de evidencia clara (no
+son errores, son casos límite documentados):
+- "BIOLOGIA II" vs "BIOLOGICAS" — coinciden en la misma clasificación 14 veces.
+- "CISNEROS" (2 filas) vs "C. CISNEROS"/"CARDENAL CISNEROS" — en 1998-99 Rugby
+  masculino 1ª coinciden ambos en la misma clasificación; podría ser un error de
+  los datos originales o un equipo real aparte, no se pudo confirmar.
+- "U. SAN PABLO" — coincide varias veces con "SAN PABLO CEU" en la misma
+  clasificación (no es el mismo equipo) y nunca con "C.M. SAN PABLO"; se dejó
+  como equipo aparte al no poder confirmar con cuál de los dos identificarlo.
+- "E. PUBLICA" vs "C.M. E. PUBLICA" — solo 1 fila cada uno, sin años solapados
+  ni forma de comprobar si son el mismo Colegio Mayor.
+
+===========================================================================
+RESUMEN
+===========================================================================
+- 26/26 años con PDF disponible: revisados, corregidos y verificados en SQLite
+  (0 errores de sintaxis, 0 violaciones de clave primaria, 7.479 filas totales).
+- 6 años (1999-00 a 2004-05) no tienen PDF fuente y no están en el proyecto.
+- 2 ficheros llevan un nombre "heredado" que no sigue el patrón estándar.
+- 2 incidencias de duplicación de datos detectadas y corregidas durante la revisión.
+- 5 patrones de error sistemáticos identificados y corregidos en todos los años
+  afectados.
+- 11 casos dudosos puntuales quedan documentados (no bloqueantes, valores
+  conservadores, sin datos inventados) tanto aquí como en la cabecera de cada
+  fichero SQL afectado.

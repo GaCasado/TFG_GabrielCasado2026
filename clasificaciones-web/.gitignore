@@ -1,0 +1,13 @@
+# Secretos y configuración local — nunca versionar
+.env
+
+# Datos de desarrollo local (MySQL en docker-compose.dev.yml)
+mysql-data/
+
+# SQLPage puede crear una base sqlite local si no se configura DATABASE_URL
+sqlpage.db
+*.db
+
+# Editor / SO
+.DS_Store
+Thumbs.db

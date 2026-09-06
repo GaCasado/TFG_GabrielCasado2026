@@ -1,0 +1,12 @@
+/* CSS mínimo, solo para lo que los componentes nativos de SQLPage/Tabler
+   no resuelven por sí solos: darle una caja visual al formulario de
+   filtros (portada y estadísticas), ya que SQLPage no le pone ninguna por
+   defecto. Se apoya en las variables CSS de Tabler para respetar el tema
+   claro/oscuro. */
+
+.filtros-clasificacion {
+  background: var(--tblr-card-bg, #fff);
+  border: 1px solid var(--tblr-border-color, #dde3e8);
+  border-radius: var(--tblr-border-radius, 4px);
+  padding: 1rem;
+}

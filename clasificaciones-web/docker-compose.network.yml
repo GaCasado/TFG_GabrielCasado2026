@@ -1,0 +1,21 @@
+# Override para conectar clasificaciones-web a un contenedor de datos que
+# vive en la red compartida "clasificaciones-net" (p.ej. clasificaciones-data,
+# ver ../clasificaciones-data/docker-compose.yml).
+#
+# Arranca PRIMERO clasificaciones-data (esa red la crea él); luego:
+#   docker compose -f docker-compose.yml -f docker-compose.network.yml up -d
+#
+# En tu .env, DATABASE_URL debe usar el nombre del contenedor de datos como
+# host, no una IP ni "host.docker.internal":
+#   DATABASE_URL=mysql://usuario@clasificaciones-data:3306/clasificaciones
+
+services:
+  sqlpage:
+    networks:
+      - default
+      - clasificaciones-net
+
+networks:
+  default: {}
+  clasificaciones-net:
+    external: true

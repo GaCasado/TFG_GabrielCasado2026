@@ -1,0 +1,27 @@
+# Aplicación web SQLPage, reutilizable frente a cualquier MySQL que exponga
+# el contrato de la tabla Clasificaciones (ver database/schema.sql).
+#
+# Este fichero NO define ningún servicio de base de datos: SQLPage se conecta
+# a un MySQL externo (ya existente, gestionado aparte) a través de las
+# variables DATABASE_URL / DATABASE_PASSWORD de tu .env. Así, la misma imagen
+# y el mismo código web sirven para varios datasets sin tocar nada más que
+# la configuración.
+#
+# Para levantar además un MySQL local de desarrollo con datos de ejemplo,
+# usa docker-compose.dev.yml (ver README.md).
+
+services:
+  sqlpage:
+    image: lovasoa/sqlpage:v0.45.0
+    restart: unless-stopped
+    ports:
+      - "${SQLPAGE_PORT:-8080}:8080"
+    volumes:
+      # Páginas .sql, shell.json y assets estáticos.
+      - ./web:/var/www:ro
+      # Configuración de SQLPage (sin credenciales: esas van por env vars).
+      - ./config:/etc/sqlpage:ro
+    environment:
+      SQLPAGE_DATABASE_URL: ${DATABASE_URL}
+      SQLPAGE_DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      SQLPAGE_ENVIRONMENT: ${SQLPAGE_ENVIRONMENT:-production}

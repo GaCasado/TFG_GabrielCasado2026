@@ -1,0 +1,16 @@
+[
+  {
+    "component": "shell",
+    "title": "Clasificaciones deportivas",
+    "link": "index.sql",
+    "layout": "boxed",
+    "language": "es",
+    "menu_item": [
+      {"title": "Inicio", "link": "index.sql"},
+      {"title": "Deportes", "link": "deporte.sql"},
+      {"title": "Estadísticas", "link": "estadisticas.sql"}
+    ],
+    "footer": "Histórico de clasificaciones deportivas.",
+    "css": "assets/style.css"
+  }
+]

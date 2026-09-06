@@ -1,0 +1,46 @@
+# Levanta el contenedor de datos (MySQL con el dataset real ya cargado) en
+# la red compartida "clasificaciones-net". Arranca este servicio ANTES que
+# clasificaciones-web (así la red ya existe cuando el otro intente unirse).
+#
+# Uso:
+#   docker compose up -d --build
+#
+# La imagen se reconstruye si cambia algo en sql/ o en
+# clasificaciones-web/database/schema.sql (build context = raíz del repo).
+
+services:
+  mysql:
+    build:
+      context: ..
+      dockerfile: clasificaciones-data/Dockerfile
+    image: clasificaciones-data:2023-24
+    container_name: clasificaciones-data
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      # Publicado al host solo por comodidad (inspeccionar la BD con un
+      # cliente MySQL desde fuera de Docker). clasificaciones-web NO lo
+      # necesita: se conecta por la red interna "clasificaciones-net".
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - clasificaciones-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  # Sin "external: true": este compose es quien crea la red la primera vez.
+  # clasificaciones-web/docker-compose.network.yml la referencia como
+  # externa, así que tiene que existir ya cuando arranques ese otro.
+  clasificaciones-net:
+    name: clasificaciones-net
+
+volumes:
+  mysql-data:
